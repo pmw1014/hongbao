@@ -21,7 +21,7 @@ class Hongbao implements HongbaoContract
     public $minimun_val = 0;
 
     // 最大金额
-    public $minimun_val = 0;
+    public $maximum_val = 0;
 
     // 生成方式
     // 1固定金额 2随机金额
@@ -36,15 +36,22 @@ class Hongbao implements HongbaoContract
     }
 
     // 验证输入参数
-    public function validate();
+    public function validate(){
+    }
 
     // 接受参数
-    public function setOptions();
+    public function setOptions(){
+
+    }
 
     // 验证数据有效性
-    public function checkData();
+    public function checkData(){
+
+    }
 
     // 发红包
-    public function create();
+    public function create(){
+
+    }
 
 }

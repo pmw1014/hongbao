@@ -10,9 +10,13 @@
             "email": "pmw1014@163.com"
         }
     ],
+    "minimum-stability": "dev",
     "require": {
         "php": ">=7.0"
     },
-    "minimum-stability": "dev",
-    "require": {}
+	"autoload": {
+		"psr-4": {
+			"Hongbao\\": "src/"
+		}
+	}
 }
