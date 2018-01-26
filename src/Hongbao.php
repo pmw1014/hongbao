@@ -32,11 +32,14 @@ class Hongbao implements HongbaoContract
 
     function __construct(array $options = [])
     {
-        echo 'hello';
+        if (is_array($options)) {
+            $this->validate($options);
+        }
     }
 
     // 验证输入参数
-    public function validate(){
+    public function validate(array $options = []){
+        var_dump($options);
     }
 
     // 接受参数
