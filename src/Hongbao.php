@@ -2,59 +2,56 @@
 
 namespace Hongbao;
 
-use Hongbao\Contracts\HongbaoContract;
+use Hongbao\Contracts\Handlers;
 
 
 /**
  * 红包红包生成器
  */
-class Hongbao implements HongbaoContract
+class Hongbao
 {
+    // 自身实例
+    protected static $instance = null;
 
-    // 总个数
-    public $total_number = 0;
+    protected $handlers = [];
 
-    // 总金额
-    public $total_money = 0;
-
-    // 最小金额
-    public $minimun_val = 0;
-
-    // 最大金额
-    public $maximum_val = 0;
-
-    // 生成方式
-    // 1固定金额 2随机金额
-    public $create_way = 0;
-
-    // 剩余金额
-    public $left_money = 0;
-
-    function __construct(array $options = [])
+    public function __construct()
     {
-        if (is_array($options)) {
-            $this->validate($options);
+        $this->handlers = $this->getHandlers();
+    }
+
+    /**
+     * 获取handler对象
+     * @brief  [description]
+     * @author zicai
+     * @date   2018-01-26T17:41:30+080
+     *
+     * @return [array]
+     */
+    protected function getHandlers()
+    {
+        return array(
+            'random' => 'Hongbao\Contracts\Handlers\RandomHongbaoHandler', // 随机红包
+        );
+    }
+
+    public function __call( string $name , array $args )
+    {
+        if (isset($this->handlers[$name])) {
+            $handler = $this->handlers[$name];
+            $handler = new $handler($args[0]);
+            return $handler->create();
         }
+        
+        throw new \Exception("{$name} 不存在");
     }
 
-    // 验证输入参数
-    public function validate(array $options = []){
-        var_dump($options);
+    // 获取实例
+    public static function getInstance()
+    {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
     }
-
-    // 接受参数
-    public function setOptions(){
-
-    }
-
-    // 验证数据有效性
-    public function checkData(){
-
-    }
-
-    // 发红包
-    public function create(){
-
-    }
-
 }
