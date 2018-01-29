@@ -31,7 +31,7 @@ class Hongbao
     protected function getHandlers()
     {
         return array(
-            'random' => 'Hongbao\Contracts\Handlers\RandomHongbaoHandler', // 随机红包
+            'fixedAmount' => 'Hongbao\Handlers\HongbaoHandler', // 固定红包
         );
     }
 
@@ -42,7 +42,7 @@ class Hongbao
             $handler = new $handler($args[0]);
             return $handler->create();
         }
-        
+
         throw new \Exception("{$name} 不存在");
     }
 
