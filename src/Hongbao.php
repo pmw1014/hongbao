@@ -32,6 +32,7 @@ class Hongbao
     {
         return array(
             'fixedAmount' => 'Hongbao\Handlers\HongbaoHandler', // 固定红包
+            'randomAmount' => 'Hongbao\Handlers\RandomHongbaoHandler', // 随机红包
         );
     }
 

@@ -15,4 +15,6 @@ interface HongbaoContract
     public function checkData();
     // 发红包
     public function create();
+    // 生成红包
+    public function hb();
 }
