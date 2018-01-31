@@ -40,10 +40,10 @@ class HongbaoHandler implements HongbaoContract
         if ( ! is_int($this->total_number) || (int)$this->total_number < 1) {
             throw new \Exception("红包总数必须是大于等于1的正整数");
         }
-        if ( ! is_numeric($this->total_number) || (int)$this->total_money < 1) {
+        if ( (float)$this->total_money < 0.01) {
             throw new \Exception("红包总金额必须大于等于0.01");
         }
-        if ( ! is_numeric($this->val) || (int)$this->val > 0.01) {
+        if ( (float)$this->val < 0.01) {
             throw new \Exception("单个红包金额必须大于等于0.01");
         }
         return $this;

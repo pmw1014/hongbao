@@ -7,8 +7,13 @@ use Hongbao\Contracts\HongbaoContract;
 /**
  * 固定红包生成器
  */
-class HongbaoHandler implements HongbaoContract
+class RandomHongbaoHandler implements HongbaoContract
 {
+	const EPSILON = 0.01;
+
+	const TOW_PI = 2.0*3.14159265358979323846;
+
+    public static $generate = false;
 
     // 总个数
     public $total_number = 0;
@@ -16,17 +21,30 @@ class HongbaoHandler implements HongbaoContract
     // 总金额
     public $total_money = 0;
 
-    // 单个红包金额
-    public $val = 0;
+    // 单个红包最小金额
+    public $minimum_val = 0;
+
+    // 单个红包最大金额
+    public $maximum_val = 0;
 
     // 生成方式
     // 1固定金额 2随机金额
     public $create_way = 0;
 
+    // 每页生成红包数
     public $limit = 0;
 
     // 当前页记录数
     public $page_row_num = 0;
+
+    // 剩余总条数
+    public $left_row_count = 0;
+
+    // 剩余金额
+    public $money_left = 0;
+
+    // 剩余金额平均值
+    public $money_left_avg = 0;
 
     public function __construct( array $options = [] )
     {
@@ -38,13 +56,16 @@ class HongbaoHandler implements HongbaoContract
     public function validate()
     {
         if ( ! is_int($this->total_number) || (int)$this->total_number < 1) {
-            throw new \Exception("红包总数必须是大于等于1的正整数");
+            throw new \Exception("输入的红包总数必须是大于等于1的正整数");
         }
-        if ( ! is_numeric($this->total_number) || (int)$this->total_money < 1) {
-            throw new \Exception("红包总金额必须大于等于0.01");
+        if ( (float)$this->total_money < 0.01) {
+            throw new \Exception("输入的红包总金额必须大于等于0.01");
         }
-        if ( ! is_numeric($this->val) || (int)$this->val > 0.01) {
-            throw new \Exception("单个红包金额必须大于等于0.01");
+        if ( (float)$this->minimum_val < 0.01) {
+            throw new \Exception("输入的单个红包金额最小值必须大于等于0.01");
+        }
+        if ( (float)$this->maximum_val < 0.01) {
+            throw new \Exception("输入的单个红包金额最大值必须大于等于0.01");
         }
         return $this;
     }
@@ -68,8 +89,11 @@ class HongbaoHandler implements HongbaoContract
     // 验证数据有效性
     public function checkData()
     {
-        if ( ($this->total_money / $this->total_number) < $this->val ) {
+        if ( ($this->total_money / $this->total_number) < $this->minimum_val ) {
             throw new \Exception("设置的红包个数与总金额不满足单个红包金额{$this->val} 元的要求");
+        }
+        if ( $this->minimum_val > $this->maximum_val ) {
+            throw new \Exception("设置的红包金额最小值不能大于最大值");
         }
         return $this;
     }
@@ -86,16 +110,14 @@ class HongbaoHandler implements HongbaoContract
     {
         $current_page = 1; // 当前页
         $page_count = ceil( $this->total_number / $this->limit ); // 总页数
-        $left_row_count = $this->total_number; // 剩余总条数
-        $left_money = $this->total_money; // 剩余金额
+        $this->left_row_count = $this->total_number; // 剩余总条数
+        $this->money_left = $this->total_money; // 剩余金额
 
         while ( $current_page <= $page_count ) {
             $data = [];
-            $this->page_row_num = ($left_row_count - $this->limit) > 0 ? $this->limit : $left_row_count; // 当前页生成记录条数
-            $left_money -= ($this->page_row_num * $this->val); // 当前剩余金额
-            $left_row_count -= $this->page_row_num; // 更新剩余记录数
+            $this->page_row_num = ($this->left_row_count - $this->limit) > 0 ? $this->limit : $this->left_row_count; // 当前页生成记录条数
             $data = $this->hb();
-            $stop = yield [ 'data' => $data, 'left_money' => $left_money];
+            $stop = yield [ 'data' => $data, 'money_left' => $this->money_left];
             if ($stop === true) {
                 return;
             }
@@ -109,10 +131,53 @@ class HongbaoHandler implements HongbaoContract
     public function hb()
     {
         $data = [];
+        $mu = 0;//实时剩余金额均值
+		$sigma = 0;//均值修正指数
+		$nose_value = 0;//当前红包金额
+        $this->money_left_avg = $this->money_left - $this->total_number * $this->minimum_val;//实时剩余金额平均值
         while ($this->page_row_num > 0) {
-            $data[] = $this->val;
+            $mu = $this->money_left_avg / $this->left_row_count;
+			$sigma = $mu / 2;
+			$nose_value = $this->GaussNoise($mu, $sigma);
+			//截尾处理
+			$nose_value = $nose_value < 0 ? 0 : $nose_value;
+			$nose_value = $nose_value > $this->money_left_avg ? $this->money_left_avg : $nose_value;
+			$nose_value = $nose_value > ($this->maximum_val - $this->minimum_val) ? ($this->maximum_val - $this->minimum_val) : $nose_value;
+
+            $val = $nose_value + $this->minimum_val;
+            $this->money_left_avg -= $val;
+			$data[] = $val;
+            $this->money_left -= $val; // 当前剩余金额
+
             $this->page_row_num--;
+            $this->left_row_count--; // 更新剩余记录数
         }
         return $data;
     }
+
+    function GaussNoise($mu, $sigma)
+	{
+		static $rand0;
+		static $rand1;
+
+		if (self::$generate)
+		{
+			self::$generate = false;
+			return sprintf("%.2f", $rand1 * $sigma + $mu);
+		}
+
+		$u1 = 0;
+		$u2 = 0;
+		do
+		{
+			$u1 = mt_rand() * (1.0 / mt_getrandmax());
+			$u2 = mt_rand() * (1.0 / mt_getrandmax());
+		} while ($u1 <= self::EPSILON);
+
+		$rand0 = sqrt(-2.0 * log($u1)) * cos(self::TOW_PI * $u2);
+		$rand1 = sqrt(-2.0 * log($u1)) * sin(self::TOW_PI * $u2);
+		self::$generate = true;
+
+		return sprintf("%.2f", $rand0 * $sigma + $mu);
+	}
 }
