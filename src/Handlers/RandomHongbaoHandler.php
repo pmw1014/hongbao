@@ -27,10 +27,6 @@ class RandomHongbaoHandler implements HongbaoContract
     // 单个红包最大金额
     public $maximum_val = 0;
 
-    // 生成方式
-    // 1固定金额 2随机金额
-    public $create_way = 0;
-
     // 每页生成红包数
     public $limit = 0;
 
@@ -133,18 +129,18 @@ class RandomHongbaoHandler implements HongbaoContract
         $data = [];
         $mu = 0;//实时剩余金额均值
 		$sigma = 0;//均值修正指数
-		$nose_value = 0;//当前红包金额
+		$noise_value = 0;//当前红包金额
         $this->money_left_avg = $this->money_left - $this->total_number * $this->minimum_val;//实时剩余金额平均值
         while ($this->page_row_num > 0) {
             $mu = $this->money_left_avg / $this->left_row_count;
 			$sigma = $mu / 2;
-			$nose_value = $this->GaussNoise($mu, $sigma);
+			$noise_value = $this->gaussNoise($mu, $sigma);
 			//截尾处理
-			$nose_value = $nose_value < 0 ? 0 : $nose_value;
-			$nose_value = $nose_value > $this->money_left_avg ? $this->money_left_avg : $nose_value;
-			$nose_value = $nose_value > ($this->maximum_val - $this->minimum_val) ? ($this->maximum_val - $this->minimum_val) : $nose_value;
+			$noise_value = $noise_value < 0 ? 0 : $noise_value;
+			$noise_value = $noise_value > $this->money_left_avg ? $this->money_left_avg : $noise_value;
+			$noise_value = $noise_value > ($this->maximum_val - $this->minimum_val) ? ($this->maximum_val - $this->minimum_val) : $noise_value;
 
-            $val = $nose_value + $this->minimum_val;
+            $val = $noise_value + $this->minimum_val;
             $this->money_left_avg -= $val;
 			$data[] = $val;
             $this->money_left -= $val; // 当前剩余金额
@@ -155,7 +151,7 @@ class RandomHongbaoHandler implements HongbaoContract
         return $data;
     }
 
-    function GaussNoise($mu, $sigma)
+    function gaussNoise($mu, $sigma)
 	{
 		static $rand0;
 		static $rand1;
