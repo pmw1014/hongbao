@@ -1,6 +1,6 @@
 {
     "name": "zicai/hongbao",
-    "description": "Create random hongbao",
+    "description": "Generate fixed red package and random red package, random red envelopes based on truncated normal distribution algorithm to generate",
     "keywords": ["hongbao"],
     "type": "library",
     "license": "MIT",
