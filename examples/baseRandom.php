@@ -1,6 +1,6 @@
 <?php
 
-require_once '../vendor/autoload.php';
+require_once '../autoload.php';
 
 use Hongbao\Hongbao;
 
