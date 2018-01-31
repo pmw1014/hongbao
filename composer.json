@@ -11,6 +11,7 @@
         }
     ],
     "minimum-stability": "dev",
+    "versions": ["dev-master","v1.0"],
     "require": {
         "php": ">=7.0"
     },
