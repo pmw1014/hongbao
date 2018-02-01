@@ -23,7 +23,8 @@ class HongbaoHandler implements HongbaoContract
     // 1固定金额 2随机金额
     public $create_way = 0;
 
-    public $limit = 0;
+    // 每页生成红包数
+    public $limit = 5000;
 
     // 当前页记录数
     public $page_row_num = 0;
@@ -31,7 +32,6 @@ class HongbaoHandler implements HongbaoContract
     public function __construct( array $options = [] )
     {
         $this->setOptions($options)->validate()->checkData();
-        $this->limit = 5000;
     }
 
     // 验证输入参数

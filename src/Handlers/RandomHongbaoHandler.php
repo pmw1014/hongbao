@@ -28,7 +28,7 @@ class RandomHongbaoHandler implements HongbaoContract
     public $maximum_val = 0;
 
     // 每页生成红包数
-    public $limit = 0;
+    public $limit = 5000;
 
     // 当前页记录数
     public $page_row_num = 0;
@@ -45,7 +45,6 @@ class RandomHongbaoHandler implements HongbaoContract
     public function __construct( array $options = [] )
     {
         $this->setOptions($options)->validate()->checkData();
-        $this->limit = 5000;
     }
 
     // 验证输入参数

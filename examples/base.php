@@ -14,12 +14,13 @@ $options = [
     'total_money' => 1000, // 总金额
     'total_number' => 1000, // 总红包数量
     'val' => 0.01, // 单个红包金额
+    'limit'=>100,
 ];
 
 try {
     $hongbao = Hongbao::getInstance()->fixedAmount($options);
+    echo "<pre/>";
     foreach ($hongbao as $result) {
-        echo "<pre/>";
         print_r($result);
     }
 } catch (\Exception $e) {
