@@ -84,8 +84,11 @@ class RandomHongbaoHandler implements HongbaoContract
     // 验证数据有效性
     public function checkData()
     {
+        if ( $this->maximum_val == $this->minimum_val ) {
+            throw new \Exception("设置的红包金额最大值与最小值相等，不可使用随机生成");
+        }
         if ( ($this->total_money / $this->total_number) < $this->minimum_val ) {
-            throw new \Exception("设置的红包个数与总金额不满足单个红包金额{$this->val} 元的要求");
+            throw new \Exception("设置的红包个数与总金额不满足单个红包最小金额{$this->minimum_val} 元的要求");
         }
         if ( $this->minimum_val > $this->maximum_val ) {
             throw new \Exception("设置的红包金额最小值不能大于最大值");
@@ -140,6 +143,7 @@ class RandomHongbaoHandler implements HongbaoContract
 			$noise_value = $noise_value > ($this->maximum_val - $this->minimum_val) ? ($this->maximum_val - $this->minimum_val) : $noise_value;
 
             $val = $noise_value + $this->minimum_val;
+            $val = $val > 0 ? $val : $this->minimum_val;
             $this->money_left_avg -= $val;
 			$data[] = $val;
             $this->money_left -= $val; // 当前剩余金额
