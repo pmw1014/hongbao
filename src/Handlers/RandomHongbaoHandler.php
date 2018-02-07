@@ -140,10 +140,10 @@ class RandomHongbaoHandler implements HongbaoContract
 			//截尾处理
 			$noise_value = $noise_value < 0 ? 0 : $noise_value;
 			$noise_value = $noise_value > $this->money_left_avg ? $this->money_left_avg : $noise_value;
-			$noise_value = $noise_value > ($this->maximum_val - $this->minimum_val) ? ($this->maximum_val - $this->minimum_val) : $noise_value;
 
             $val = $noise_value + $this->minimum_val;
-            $val = $val > 0 ? $val : $this->minimum_val;
+            $val = $val > $this->maximum_val ? $this->maximum_val : $val;
+            $val = $val < $this->minimum_val ? $this->minimum_val : $val;
             $this->money_left_avg -= $val;
 			$data[] = $val;
             $this->money_left -= $val; // 当前剩余金额
