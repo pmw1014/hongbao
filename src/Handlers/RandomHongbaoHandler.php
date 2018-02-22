@@ -132,19 +132,17 @@ class RandomHongbaoHandler implements HongbaoContract
         $mu = 0;//实时剩余金额均值
 		$sigma = 0;//均值修正指数
 		$noise_value = 0;//当前红包金额
-        $this->money_left_avg = $this->money_left - $this->total_number * $this->minimum_val;//实时剩余金额平均值
-        while ($this->page_row_num > 0) {
+        while ($this->page_row_num > 0 && $this->money_left > 0) {
+            $this->money_left_avg = $this->money_left - ($this->left_row_count * $this->minimum_val);//实时剩余金额平均值
             $mu = $this->money_left_avg / $this->left_row_count;
 			$sigma = $mu / 2;
 			$noise_value = $this->gaussNoise($mu, $sigma);
-			//截尾处理
-			$noise_value = $noise_value < 0 ? 0 : $noise_value;
-			$noise_value = $noise_value > $this->money_left_avg ? $this->money_left_avg : $noise_value;
 
             $val = $noise_value + $this->minimum_val;
             $val = $val > $this->maximum_val ? $this->maximum_val : $val;
             $val = $val < $this->minimum_val ? $this->minimum_val : $val;
-            $this->money_left_avg -= $val;
+            $val = ($this->money_left - $val) < 0 ? $this->money_left : $val;
+            
 			$data[] = $val;
             $this->money_left -= $val; // 当前剩余金额
 

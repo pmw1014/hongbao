@@ -14,6 +14,7 @@ $options = [
     'maximum_val' => isset($_POST['maximum_val']) ? (float)$_POST['maximum_val'] : 20, // 最大随机红包金额
 ];
 $data = [];
+$money_left = 0;
 try {
     $Hongbao = Hongbao::getInstance()->randomAmount($options);
     $i = 0;
@@ -23,6 +24,7 @@ try {
             $i++;
         }
         $data = array_merge($result['data'],$data);
+        $money_left = $result['money_left'];
     }
 } catch (\Exception $e) {
     $error = $e->getMessage();
@@ -135,5 +137,6 @@ try {
 </html>
 <?php
 echo "耗时：" . (microtime(true)-$t1);
-echo "\n";
-echo "消耗内存：" . round((memory_get_usage()-$m1)/1024/1024,2)."MB\n";
+echo "</br>";
+echo "消耗内存：" . round((memory_get_usage()-$m1)/1024/1024,2)."MB</br>";
+echo "剩余金额" . $money_left . "</br>";
