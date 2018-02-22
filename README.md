@@ -3,6 +3,8 @@
 生成固定红包与随机红包，随机红包金额依据截尾正态分布算法来生成
 >Generate fixed red package and random red package, random red envelopes based on truncated normal distribution algorithm to generate
 
+![图像画案例](http://of8hab1mv.bkt.clouddn.com/e1.gif)
+
 ### 生成随机红包(Random Red Package) ###
 
 ```php
