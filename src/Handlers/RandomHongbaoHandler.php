@@ -5,7 +5,7 @@ namespace Hongbao\Handlers;
 use Hongbao\Contracts\HongbaoContract;
 
 /**
- * 固定红包生成器
+ * 随机红包生成器
  */
 class RandomHongbaoHandler implements HongbaoContract
 {
@@ -130,20 +130,20 @@ class RandomHongbaoHandler implements HongbaoContract
     {
         $data = [];
         $mu = 0;//实时剩余金额均值
-		$sigma = 0;//均值修正指数
-		$noise_value = 0;//当前红包金额
+        $sigma = 0;//均值修正指数
+        $noise_value = 0;//当前红包金额
         while ($this->page_row_num > 0 && $this->money_left > 0) {
             $this->money_left_avg = $this->money_left - ($this->left_row_count * $this->minimum_val);//实时剩余金额平均值
             $mu = $this->money_left_avg / $this->left_row_count;
-			$sigma = $mu / 2;
-			$noise_value = $this->gaussNoise($mu, $sigma);
+            $sigma = $mu / 2;
+            $noise_value = $this->gaussNoise($mu, $sigma);
 
             $val = $noise_value + $this->minimum_val;
             $val = $val > $this->maximum_val ? $this->maximum_val : $val;
             $val = $val < $this->minimum_val ? $this->minimum_val : $val;
             $val = ($this->money_left - $val) < 0 ? $this->money_left : $val;
             
-			$data[] = $val;
+            $data[] = $val;
             $this->money_left -= $val; // 当前剩余金额
 
             $this->page_row_num--;
@@ -153,28 +153,28 @@ class RandomHongbaoHandler implements HongbaoContract
     }
 
     function gaussNoise($mu, $sigma)
-	{
-		static $rand0;
-		static $rand1;
+    {
+        static $rand0;
+        static $rand1;
 
-		if (self::$generate)
-		{
-			self::$generate = false;
-			return sprintf("%.2f", $rand1 * $sigma + $mu);
-		}
+        if (self::$generate)
+        {
+            self::$generate = false;
+            return sprintf("%.2f", $rand1 * $sigma + $mu);
+        }
 
-		$u1 = 0;
-		$u2 = 0;
-		do
-		{
-			$u1 = mt_rand() * (1.0 / mt_getrandmax());
-			$u2 = mt_rand() * (1.0 / mt_getrandmax());
-		} while ($u1 <= self::EPSILON);
+        $u1 = 0;
+        $u2 = 0;
+        do
+        {
+            $u1 = mt_rand() * (1.0 / mt_getrandmax());
+            $u2 = mt_rand() * (1.0 / mt_getrandmax());
+        } while ($u1 <= self::EPSILON);
 
-		$rand0 = sqrt(-2.0 * log($u1)) * cos(self::TOW_PI * $u2);
-		$rand1 = sqrt(-2.0 * log($u1)) * sin(self::TOW_PI * $u2);
-		self::$generate = true;
+        $rand0 = sqrt(-2.0 * log($u1)) * cos(self::TOW_PI * $u2);
+        $rand1 = sqrt(-2.0 * log($u1)) * sin(self::TOW_PI * $u2);
+        self::$generate = true;
 
-		return sprintf("%.2f", $rand0 * $sigma + $mu);
-	}
+        return sprintf("%.2f", $rand0 * $sigma + $mu);
+    }
 }
