@@ -19,15 +19,17 @@ class HongbaoHandler implements HongbaoContract
     // 单个红包金额
     public $val = 0;
 
-    // 生成方式
-    // 1固定金额 2随机金额
-    public $create_way = 0;
-
     // 每页生成红包数
     public $limit = 5000;
 
     // 当前页记录数
     public $page_row_num = 0;
+
+    // 剩余总条数
+    public $left_row_count = 0;
+
+    // 剩余金额
+    public $money_left = 0;
 
     public function __construct( array $options = [] )
     {
@@ -86,16 +88,14 @@ class HongbaoHandler implements HongbaoContract
     {
         $current_page = 1; // 当前页
         $page_count = ceil( $this->total_number / $this->limit ); // 总页数
-        $left_row_count = $this->total_number; // 剩余总条数
-        $left_money = $this->total_money; // 剩余金额
+        $this->left_row_count = $this->total_number; // 剩余总条数
+        $this->left_money = $this->total_money; // 剩余金额
 
         while ( $current_page <= $page_count ) {
             $data = [];
-            $this->page_row_num = ($left_row_count - $this->limit) > 0 ? $this->limit : $left_row_count; // 当前页生成记录条数
-            $left_money -= ($this->page_row_num * $this->val); // 当前剩余金额
-            $left_row_count -= $this->page_row_num; // 更新剩余记录数
+            $this->page_row_num = ($this->left_row_count - $this->limit) > 0 ? $this->limit : $this->left_row_count; // 当前页生成记录条数
             $data = $this->hb();
-            $stop = yield [ 'data' => $data, 'left_money' => $left_money];
+            $stop = yield [ 'data' => $data, 'left_money' => $this->left_money];
             if ($stop === true) {
                 return;
             }
@@ -112,6 +112,8 @@ class HongbaoHandler implements HongbaoContract
         while ($this->page_row_num > 0) {
             $data[] = $this->val;
             $this->page_row_num--;
+            $this->left_row_count--;
+            $this->left_money = bcsub($this->left_money, $this->val, 2); // 当前剩余金额
         }
         return $data;
     }
