@@ -42,6 +42,12 @@ class RandomHongbaoHandler implements HongbaoContract
     // 剩余金额平均值
     public $money_left_avg = 0;
 
+    // 当前页数
+    public $current_page = 0;
+
+    // 总页数
+    public $page_count = 0;
+
     public function __construct( array $options = [] )
     {
         $this->setOptions($options)->validate()->checkData();
@@ -53,14 +59,14 @@ class RandomHongbaoHandler implements HongbaoContract
         if ( ! is_int($this->total_number) || (int)$this->total_number < 1) {
             throw new \Exception("输入的红包总数必须是大于等于1的正整数");
         }
-        if ( (float)$this->total_money < 0.01) {
-            throw new \Exception("输入的红包总金额必须大于等于0.01");
+        if ( (float)$this->total_money < self::EPSILON) {
+            throw new \Exception("输入的红包总金额必须大于等于".self::EPSILON);
         }
-        if ( (float)$this->minimum_val < 0.01) {
-            throw new \Exception("输入的单个红包金额最小值必须大于等于0.01");
+        if ( (float)$this->minimum_val < self::EPSILON) {
+            throw new \Exception("输入的单个红包金额最小值必须大于等于".self::EPSILON);
         }
-        if ( (float)$this->maximum_val < 0.01) {
-            throw new \Exception("输入的单个红包金额最大值必须大于等于0.01");
+        if ( (float)$this->maximum_val < self::EPSILON) {
+            throw new \Exception("输入的单个红包金额最大值必须大于等于".self::EPSILON);
         }
         return $this;
     }
@@ -106,12 +112,12 @@ class RandomHongbaoHandler implements HongbaoContract
      */
     public function create()
     {
-        $current_page = 1; // 当前页
-        $page_count = ceil( $this->total_number / $this->limit ); // 总页数
+        $this->current_page = 1; // 当前页
+        $this->page_count = (int)ceil( $this->total_number / $this->limit ); // 总页数
         $this->left_row_count = $this->total_number; // 剩余总条数
         $this->money_left = $this->total_money; // 剩余金额
 
-        while ( $current_page <= $page_count ) {
+        while ( $this->current_page <= $this->page_count ) {
             $data = [];
             $this->page_row_num = ($this->left_row_count - $this->limit) > 0 ? $this->limit : $this->left_row_count; // 当前页生成记录条数
             $data = $this->hb();
@@ -120,7 +126,7 @@ class RandomHongbaoHandler implements HongbaoContract
                 return;
             }
 
-            $current_page++;
+            $this->current_page++;
         }
 
     }
@@ -133,22 +139,28 @@ class RandomHongbaoHandler implements HongbaoContract
         $sigma = 0;//均值修正指数
         $noise_value = 0;//当前红包金额
         while ($this->page_row_num > 0 && $this->money_left > 0) {
-            $this->money_left_avg = $this->money_left - ($this->left_row_count * $this->minimum_val);//实时剩余金额平均值
-            $mu = $this->money_left_avg / $this->left_row_count;
-            $sigma = $mu / 2;
+            $this->money_left_avg = bcsub($this->money_left, bcmul($this->left_row_count, $this->minimum_val, 4), 4);//实时剩余金额平均值
+            $mu = bcdiv($this->money_left_avg, $this->left_row_count, 2);
+            $sigma = bcdiv($mu, 2, 2);
             $noise_value = $this->gaussNoise($mu, $sigma);
 
-            $val = $noise_value + $this->minimum_val;
+            $val = bcadd($noise_value, $this->minimum_val, 4);
             $val = $val > $this->maximum_val ? $this->maximum_val : $val;
             $val = $val < $this->minimum_val ? $this->minimum_val : $val;
-            $val = ($this->money_left - $val) < 0 ? $this->money_left : $val;
+            $val = sprintf("%.2f", bcsub($this->money_left, $val, 4)) < 0 ? $this->money_left : $val;
             
-            $data[] = $val;
-            $this->money_left -= $val; // 当前剩余金额
+            $data[] = sprintf("%.2f", $val);
+            $this->money_left = sprintf("%.2f", bcsub($this->money_left, $val, 4)); // 当前剩余金额
 
             $this->page_row_num--;
             $this->left_row_count--; // 更新剩余记录数
         }
+
+        // 补齐数据
+        if ( $this->current_page === $this->page_count ) {
+            $data = $this->makeUp($data);
+        }
+
         return $data;
     }
 
@@ -160,7 +172,7 @@ class RandomHongbaoHandler implements HongbaoContract
         if (self::$generate)
         {
             self::$generate = false;
-            return sprintf("%.2f", $rand1 * $sigma + $mu);
+            return sprintf("%.2f", bcadd(bcmul($rand1, $sigma, 4), $mu, 4));
         }
 
         $u1 = 0;
@@ -171,10 +183,37 @@ class RandomHongbaoHandler implements HongbaoContract
             $u2 = mt_rand() * (1.0 / mt_getrandmax());
         } while ($u1 <= self::EPSILON);
 
-        $rand0 = sqrt(-2.0 * log($u1)) * cos(self::TOW_PI * $u2);
-        $rand1 = sqrt(-2.0 * log($u1)) * sin(self::TOW_PI * $u2);
+        $rand0 = sqrt(-2.0 * log($u1)) * cos(bcmul(self::TOW_PI, $u2, 4));
+        $rand1 = sqrt(-2.0 * log($u1)) * sin(bcmul(self::TOW_PI, $u2, 4));
         self::$generate = true;
 
-        return sprintf("%.2f", $rand0 * $sigma + $mu);
+        return sprintf("%.2f", bcadd(bcmul($rand0, $sigma, 4), $mu, 4));
+    }
+
+    /**
+     * 补齐数据
+     *
+     * @param array $data
+     * @return array
+     */
+    public function makeUp(array $data) :array
+    {
+        if ( ! empty($this->page_row_num) && $this->money_left != 0.00 ) {
+            $avg_left = sprintf("%.2f", bcdiv($this->money_left, $this->page_row_num, 4));
+            do {
+                $index_min = array_search(min($data), $data);
+                $data[$index_min] = sprintf("%.2f", bcadd($data[$index_min], $avg_left, 4));
+                $this->page_row_num--;
+                $this->money_left = sprintf("%.2f", bcsub($this->money_left, $avg_left, 4));
+            } while ($this->page_row_num > 0);
+        }
+
+        if ( empty($this->page_row_num) && $this->money_left != 0.00 ) {
+            $index_min = array_search(min($data), $data);
+            $data[$index_min] = sprintf("%.2f", bcadd($data[$index_min], $this->money_left, 4));
+            $this->money_left = "0.00";
+        }
+
+        return $data;
     }
 }

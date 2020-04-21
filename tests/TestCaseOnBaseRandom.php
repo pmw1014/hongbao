@@ -3,10 +3,17 @@
 use Hongbao\Hongbao;
 use PHPUnit\Framework\TestCase;
 
-class TestCaseOnBase extends TestCase
+class TestCaseOnBaseRandom extends TestCase
 {
 
     public static $params;
+
+    public $total_money;//总金额
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
     public static function getParam($name, $default = null)
     {
@@ -22,17 +29,18 @@ class TestCaseOnBase extends TestCase
      */
     public function testCheckCount()
     {
-        $options = self::getParam('baseConfig',[]);
-        $hbs = [];
+        $options = self::getParam('baseRandomConfig',[]);
         $money_left = 0.00;
+        $hbs = [];
         try {
-            $hongbao = Hongbao::getInstance()->fixedAmount($options);
+            $hongbao = Hongbao::getInstance()->randomAmount($options);
             foreach ($hongbao as $result) {
                 $hbs = array_merge($hbs, $result['data']);
                 $money_left = $result['money_left'];
             }
         } catch (\Exception $e) {
             $error = $e->getMessage();
+            var_dump($error);
         }
         $this->assertCount($options['total_number'], $hbs);
         
@@ -49,12 +57,12 @@ class TestCaseOnBase extends TestCase
      */
     public function testCheckTotal(array $data)
     {
-        $total = $data['money_left'];
-        $options = self::getParam('baseConfig',[]);
+        $total_money = 0;
+        $options = self::getParam('baseRandomConfig',[]);
         foreach ($data['data'] as $hb) {
-            $total = bcadd($hb, $total, 2);
+            $total_money = bcadd($hb, $total_money, 2);
         }
-        $this->assertEquals($options['total_money'], $total);
+        $this->assertEquals($options['total_money'], $total_money);
     }
 
 

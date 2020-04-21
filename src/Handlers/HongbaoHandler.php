@@ -89,13 +89,13 @@ class HongbaoHandler implements HongbaoContract
         $current_page = 1; // 当前页
         $page_count = ceil( $this->total_number / $this->limit ); // 总页数
         $this->left_row_count = $this->total_number; // 剩余总条数
-        $this->left_money = $this->total_money; // 剩余金额
+        $this->money_left = $this->total_money; // 剩余金额
 
         while ( $current_page <= $page_count ) {
             $data = [];
             $this->page_row_num = ($this->left_row_count - $this->limit) > 0 ? $this->limit : $this->left_row_count; // 当前页生成记录条数
             $data = $this->hb();
-            $stop = yield [ 'data' => $data, 'left_money' => $this->left_money];
+            $stop = yield [ 'data' => $data, 'money_left' => $this->money_left];
             if ($stop === true) {
                 return;
             }
@@ -113,7 +113,7 @@ class HongbaoHandler implements HongbaoContract
             $data[] = $this->val;
             $this->page_row_num--;
             $this->left_row_count--;
-            $this->left_money = bcsub($this->left_money, $this->val, 2); // 当前剩余金额
+            $this->money_left = bcsub($this->money_left, $this->val, 2); // 当前剩余金额
         }
         return $data;
     }
