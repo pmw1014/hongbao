@@ -39,13 +39,13 @@ class HongbaoHandler implements HongbaoContract
     // 验证输入参数
     public function validate()
     {
-        if ( ! is_int($this->total_number) || (int)$this->total_number < 1) {
+        if ( (int)$this->total_number < 1) {
             throw new \Exception("红包总数必须是大于等于1的正整数");
         }
-        if ( (float)$this->total_money < 0.01) {
+        if ( strcmp((string)$this->total_money, (string)0.01) < 0 ) {
             throw new \Exception("红包总金额必须大于等于0.01");
         }
-        if ( (float)$this->val < 0.01) {
+        if ( strcmp((string)$this->val, (string)0.01) < 0 ) {
             throw new \Exception("单个红包金额必须大于等于0.01");
         }
         return $this;

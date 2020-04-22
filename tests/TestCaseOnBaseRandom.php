@@ -30,7 +30,7 @@ class TestCaseOnBaseRandom extends TestCase
     public function testCheckCount()
     {
         $options = self::getParam('baseRandomConfig',[]);
-        $money_left = 0.00;
+        $money_left = "0.00";
         $hbs = [];
         try {
             $hongbao = Hongbao::getInstance()->randomAmount($options);
@@ -40,7 +40,6 @@ class TestCaseOnBaseRandom extends TestCase
             }
         } catch (\Exception $e) {
             $error = $e->getMessage();
-            var_dump($error);
         }
         $this->assertCount($options['total_number'], $hbs);
         

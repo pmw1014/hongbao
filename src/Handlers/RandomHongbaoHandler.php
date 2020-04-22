@@ -56,16 +56,16 @@ class RandomHongbaoHandler implements HongbaoContract
     // 验证输入参数
     public function validate()
     {
-        if ( ! is_int($this->total_number) || (int)$this->total_number < 1) {
+        if ( (int)$this->total_number < 1) {
             throw new \Exception("输入的红包总数必须是大于等于1的正整数");
         }
-        if ( (float)$this->total_money < self::EPSILON) {
+        if ( strcmp((string)$this->total_money, (string)self::EPSILON) < 0 ) {
             throw new \Exception("输入的红包总金额必须大于等于".self::EPSILON);
         }
-        if ( (float)$this->minimum_val < self::EPSILON) {
+        if ( strcmp((string)$this->minimum_val, (string)self::EPSILON) < 0 ) {
             throw new \Exception("输入的单个红包金额最小值必须大于等于".self::EPSILON);
         }
-        if ( (float)$this->maximum_val < self::EPSILON) {
+        if ( strcmp((string)$this->maximum_val, (string)self::EPSILON) < 0 ) {
             throw new \Exception("输入的单个红包金额最大值必须大于等于".self::EPSILON);
         }
         return $this;
