@@ -38,7 +38,10 @@ try {
     <title>Flot Examples: Canvas text</title>
     <link href="jquery/examples.css" rel="stylesheet" type="text/css">
     <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
-    <script language="javascript" type="text/javascript" src="jquery/jquery.js"></script>
+    <script
+  src="https://code.jquery.com/jquery-3.5.0.slim.min.js"
+  integrity="sha256-MlusDLJIP1GRgLrOflUQtshyP0TwT/RHXsI1wWGnQhs="
+  crossorigin="anonymous"></script>
     <script language="javascript" type="text/javascript" src="jquery/jquery.flot.js"></script>
     <script type="text/javascript">
 
