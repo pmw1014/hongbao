@@ -3,15 +3,16 @@
 namespace Hongbao\Handlers;
 
 use Hongbao\Contracts\HongbaoContract;
+use Hongbao\Library\Helpers\MathHelper;
 
 /**
  * 随机红包生成器
  */
 class RandomHongbaoHandler implements HongbaoContract
 {
-	const EPSILON = 0.01;
+    const EPSILON = 0.01;
 
-	const TOW_PI = 2.0*3.14159265358979323846;
+    const TOW_PI = 2.0 * M_PI;
 
     public static $generate = false;
 
@@ -139,18 +140,18 @@ class RandomHongbaoHandler implements HongbaoContract
         $sigma = 0;//均值修正指数
         $noise_value = 0;//当前红包金额
         while ($this->page_row_num > 0 && $this->money_left > 0) {
-            $this->money_left_avg = bcsub($this->money_left, bcmul($this->left_row_count, $this->minimum_val, 4), 4);//实时剩余金额平均值
-            $mu = bcdiv($this->money_left_avg, $this->left_row_count, 2);
-            $sigma = bcdiv($mu, 2, 2);
+            $this->money_left_avg = MathHelper::mbcsub($this->money_left, MathHelper::mbcmul($this->left_row_count, $this->minimum_val));//实时剩余金额平均值
+            $mu = MathHelper::mbcdiv($this->money_left_avg, $this->left_row_count, 2);
+            $sigma = MathHelper::mbcdiv($mu, 2);
             $noise_value = $this->gaussNoise($mu, $sigma);
 
-            $val = bcadd($noise_value, $this->minimum_val, 4);
+            $val = MathHelper::mbcadd($noise_value, $this->minimum_val);
             $val = $val > $this->maximum_val ? $this->maximum_val : $val;
             $val = $val < $this->minimum_val ? $this->minimum_val : $val;
-            $val = sprintf("%.2f", bcsub($this->money_left, $val, 4)) < 0 ? $this->money_left : $val;
+            $val = sprintf("%.2f", MathHelper::mbcsub($this->money_left, $val)) < 0 ? $this->money_left : $val;
             
             $data[] = sprintf("%.2f", $val);
-            $this->money_left = sprintf("%.2f", bcsub($this->money_left, $val, 4)); // 当前剩余金额
+            $this->money_left = sprintf("%.2f", MathHelper::mbcsub($this->money_left, $val)); // 当前剩余金额
 
             $this->page_row_num--;
             $this->left_row_count--; // 更新剩余记录数
@@ -172,7 +173,7 @@ class RandomHongbaoHandler implements HongbaoContract
         if (self::$generate)
         {
             self::$generate = false;
-            return sprintf("%.2f", bcadd(bcmul($rand1, $sigma, 4), $mu, 4));
+            return sprintf("%.2f", MathHelper::mbcadd(MathHelper::mbcmul($rand1, $sigma), $mu));
         }
 
         $u1 = 0;
@@ -183,11 +184,11 @@ class RandomHongbaoHandler implements HongbaoContract
             $u2 = mt_rand() * (1.0 / mt_getrandmax());
         } while ($u1 <= self::EPSILON);
 
-        $rand0 = sqrt(-2.0 * log($u1)) * cos(bcmul(self::TOW_PI, $u2, 4));
-        $rand1 = sqrt(-2.0 * log($u1)) * sin(bcmul(self::TOW_PI, $u2, 4));
+        $rand0 = sqrt(-2.0 * log($u1)) * cos(MathHelper::mbcmul(self::TOW_PI, $u2));
+        $rand1 = sqrt(-2.0 * log($u1)) * sin(MathHelper::mbcmul(self::TOW_PI, $u2));
         self::$generate = true;
 
-        return sprintf("%.2f", bcadd(bcmul($rand0, $sigma, 4), $mu, 4));
+        return sprintf("%.2f",MathHelper::mbcadd(MathHelper::mbcmul($rand0, $sigma), $mu));
     }
 
     /**
@@ -199,18 +200,18 @@ class RandomHongbaoHandler implements HongbaoContract
     public function makeUp(array $data) :array
     {
         if ( ! empty($this->page_row_num) && $this->money_left != 0.00 ) {
-            $avg_left = sprintf("%.2f", bcdiv($this->money_left, $this->page_row_num, 4));
+            $avg_left = sprintf("%.2f", MathHelper::mbcdiv($this->money_left, $this->page_row_num));
             do {
                 $index_min = array_search(min($data), $data);
-                $data[$index_min] = sprintf("%.2f", bcadd($data[$index_min], $avg_left, 4));
+                $data[$index_min] = sprintf("%.2f", MathHelper::mbcadd($data[$index_min], $avg_left));
                 $this->page_row_num--;
-                $this->money_left = sprintf("%.2f", bcsub($this->money_left, $avg_left, 4));
+                $this->money_left = sprintf("%.2f", MathHelper::mbcsub($this->money_left, $avg_left));
             } while ($this->page_row_num > 0);
         }
 
         if ( empty($this->page_row_num) && $this->money_left != 0.00 ) {
             $index_min = array_search(min($data), $data);
-            $data[$index_min] = sprintf("%.2f", bcadd($data[$index_min], $this->money_left, 4));
+            $data[$index_min] = sprintf("%.2f", MathHelper::mbcadd($data[$index_min], $this->money_left));
             $this->money_left = "0.00";
         }
 
